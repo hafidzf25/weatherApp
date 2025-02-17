@@ -26,6 +26,7 @@ class ForecastWeather extends StatelessWidget {
           children: [
             Text(
               time,
+              maxLines: 1,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,

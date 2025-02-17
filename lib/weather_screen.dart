@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:weather_app/additional_information_item.dart';
 import 'package:weather_app/api.dart';
 import 'package:weather_app/weather_forecast_item.dart';
@@ -15,6 +16,7 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
+  late Future<Map<String, dynamic>> weather;
   Future<Map<String, dynamic>> getCurrentWeather() async {
     try {
       final res = await http.get(Uri.parse(
@@ -35,13 +37,13 @@ class _WeatherScreenState extends State<WeatherScreen> {
   @override
   void initState() {
     super.initState();
-    getCurrentWeather();
+    weather = getCurrentWeather();
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: getCurrentWeather(),
+        future: weather,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator.adaptive());
@@ -57,6 +59,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
           final currentHumidity = data['list'][0]['main']['humidity'];
           final currentWind = data['list'][0]['wind']['speed'];
           final currentPressure = data['list'][0]['main']['pressure'];
+          final hourlyForecast = data['list'];
 
           return Scaffold(
             appBar: AppBar(
@@ -152,41 +155,27 @@ class _WeatherScreenState extends State<WeatherScreen> {
                   SizedBox(
                     height: 20,
                   ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        ForecastWeather(
-                          time: "00:00",
-                          icon: Icons.cloud,
-                          temperature: "301.22",
-                        ),
-                        ForecastWeather(
-                          time: "03:00",
-                          icon: Icons.sunny,
-                          temperature: "300.52",
-                        ),
-                        ForecastWeather(
-                          time: "06:00",
-                          icon: Icons.cloud,
-                          temperature: "302.22",
-                        ),
-                        ForecastWeather(
-                          time: "09:00",
-                          icon: Icons.sunny,
-                          temperature: "300.12",
-                        ),
-                        ForecastWeather(
-                          time: "12:00",
-                          icon: Icons.cloud,
-                          temperature: "301.22",
-                        ),
-                        ForecastWeather(
-                          time: "15:00",
-                          icon: Icons.sunny,
-                          temperature: "300.52",
-                        ),
-                      ],
+                  SizedBox(
+                    height: 140,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5,
+                      itemBuilder: (context, index) {
+                        final hourlyTime =
+                            DateTime.parse(hourlyForecast[index + 1]['dt_txt']);
+                        final fixTime = DateFormat('j').format(hourlyTime);
+                        final hourlyWeather =
+                            hourlyForecast[index + 1]['weather'][0]['main'];
+                        final hourlyTemp =
+                            hourlyForecast[index + 1]['main']['temp'];
+                        return ForecastWeather(
+                            time: fixTime,
+                            icon: hourlyWeather == 'Clouds' ||
+                                    hourlyWeather == 'Rain'
+                                ? Icons.cloud
+                                : Icons.sunny,
+                            temperature: "${hourlyTemp}");
+                      },
                     ),
                   ),
                   SizedBox(height: 20),
